@@ -1,12 +1,16 @@
 import * as THREE from 'three'
 
+// تصنيف المواد
 export function classifyMesh(mesh) {
   if (mesh.userData._ctype) return mesh.userData._ctype
 
   const meshName = (mesh.name || '').toLowerCase()
-  const matName = (
-    Array.isArray(mesh.material) ? mesh.material[0]?.name : mesh.material?.name
-  )?.toLowerCase() || ''
+  const matName =
+    (
+      Array.isArray(mesh.material)
+        ? mesh.material[0]?.name
+        : mesh.material?.name
+    )?.toLowerCase() || ''
 
   const full = meshName + ' | ' + matName
   let result = 'other'
@@ -81,34 +85,54 @@ export function classifyMesh(mesh) {
   }
   // حسب mesh
   else if (
-    full.includes('interior') || full.includes('seat') ||
-    full.includes('steering') || full.includes('dashboard') ||
-    full.includes('console') || full.includes('engine') ||
-    full.includes('exhaust') || full.includes('suspension') ||
-    full.includes('carbon') || full.includes('calliper') ||
-    full.includes('caliper') || full.includes('brake')
+    full.includes('interior') ||
+    full.includes('seat') ||
+    full.includes('steering') ||
+    full.includes('dashboard') ||
+    full.includes('console') ||
+    full.includes('engine') ||
+    full.includes('exhaust') ||
+    full.includes('suspension') ||
+    full.includes('carbon') ||
+    full.includes('calliper') ||
+    full.includes('caliper') ||
+    full.includes('brake')
   ) {
     result = 'ignore'
-  }
-  else if (full.includes('glass') || full.includes('window') || full.includes('windshield')) {
+  } else if (
+    full.includes('glass') ||
+    full.includes('window') ||
+    full.includes('windshield')
+  ) {
     result = 'glass'
-  }
-  else if (full.includes('wheel') || full.includes('rim') ||
-           full.includes('tire') || full.includes('tyre')) {
+  } else if (
+    full.includes('wheel') ||
+    full.includes('rim') ||
+    full.includes('tire') ||
+    full.includes('tyre')
+  ) {
     result = 'wheel'
-  }
-  else if (full.includes('paint') || full.includes('body') ||
-           full.includes('chassis') || full.includes('shell') ||
-           full.includes('exterior') || full.includes('door') ||
-           full.includes('hood') || full.includes('trunk') ||
-           full.includes('fender') || full.includes('bumper') ||
-           full.includes('boot') || full.includes('splitter')) {
+  } else if (
+    full.includes('paint') ||
+    full.includes('body') ||
+    full.includes('chassis') ||
+    full.includes('shell') ||
+    full.includes('exterior') ||
+    full.includes('door') ||
+    full.includes('hood') ||
+    full.includes('trunk') ||
+    full.includes('fender') ||
+    full.includes('bumper') ||
+    full.includes('boot') ||
+    full.includes('splitter')
+  ) {
     result = 'body'
   }
 
   mesh.userData._ctype = result
   return result
 }
+
 
 export function applyColors(
   scene,
@@ -124,6 +148,10 @@ export function applyColors(
   const bodyC = new THREE.Color(bodyColor)
   const wheelC = new THREE.Color(wheelColor)
   const glassC = new THREE.Color(glassColor)
+
+  bodyC.convertSRGBToLinear()
+  wheelC.convertSRGBToLinear()
+  glassC.convertSRGBToLinear()
 
   const stats = { body: 0, wheel: 0, glass: 0, ignored: 0, other: 0 }
 
@@ -152,21 +180,21 @@ export function applyColors(
 
         case 'wheel':
           mat.color.copy(wheelC)
-          mat.metalness = 0.9
-          mat.roughness = 0.35
+          mat.metalness = 0.7
+          mat.roughness = 0.4
           stats.wheel++
           break
 
         case 'body':
           mat.color.copy(bodyC)
-          mat.metalness = 0.6
-          mat.roughness = 0.25
+          mat.metalness = 0.4
+          mat.roughness = 0.3
           if ('clearcoat' in mat) {
             mat.clearcoat = clearcoatEnabled ? clearcoatIntensity : 0
-            mat.clearcoatRoughness = 0.05
+            mat.clearcoatRoughness = 0.1
           }
           if ('envMapIntensity' in mat) {
-            mat.envMapIntensity = clearcoatEnabled ? 1.5 : 0.8
+            mat.envMapIntensity = clearcoatEnabled ? 1.0 : 0.6
           }
           stats.body++
           break
@@ -188,6 +216,9 @@ export function applyColors(
   return stats
 }
 
+
+// Clone Materials
+
 export function cloneMaterials(scene) {
   scene.traverse((child) => {
     if (!child.isMesh) return
@@ -197,10 +228,4 @@ export function cloneMaterials(scene) {
       child.material = child.material.clone()
     }
   })
-}
-
-export function getModelMaxDimension(scene) {
-  const box = new THREE.Box3().setFromObject(scene)
-  const size = box.getSize(new THREE.Vector3())
-  return Math.max(size.x, size.y, size.z)
 }

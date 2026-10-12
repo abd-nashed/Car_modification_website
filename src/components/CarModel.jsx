@@ -1,12 +1,8 @@
 import { useEffect, useRef, useMemo } from 'react'
 import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
-import { useCarStore, CARS } from '../store/useCarStore'
-import {
-  cloneMaterials,
-  applyColors,
-  getModelMaxDimension,
-} from '../utils/materialUtils'
+import { useCarStore } from '../store/useCarStore'
+import { cloneMaterials, applyColors } from '../utils/materialUtils'
 
 const BASE_PATH = '/models/'
 
@@ -56,7 +52,6 @@ export function CarModel({ onLoad }) {
     onLoad?.()
   }, [clonedScene, onLoad])
 
-  // 🎨 تطبيق الألوان
   useEffect(() => {
     if (!clonedScene) return
     applyColors(clonedScene, {
@@ -77,7 +72,19 @@ export function CarModel({ onLoad }) {
     clearcoatIntensity,
   ])
 
+  useEffect(() => {
+    return () => {
+      clonedScene?.traverse((child) => {
+        if (child.isMesh) {
+          if (Array.isArray(child.material)) {
+            child.material.forEach((m) => m.dispose())
+          } else if (child.material) {
+            child.material.dispose()
+          }
+        }
+      })
+    }
+  }, [clonedScene])
+
   return <primitive ref={groupRef} object={clonedScene} />
 }
-
-useGLTF.preload(BASE_PATH + CARS[0].file)

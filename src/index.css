@@ -14,7 +14,9 @@ html, body, #root {
   direction: ltr;
 }
 
-
+/* ============================================
+   UI Panel (Base)
+   ============================================ */
 .ui-panel {
   position: fixed;
   z-index: 10;
@@ -45,9 +47,17 @@ html, body, #root {
   overflow-y: auto;
 }
 
+/* ============================================
+   Scrollbar (Desktop)
+   ============================================ */
 .car-selector::-webkit-scrollbar,
 .config-panel::-webkit-scrollbar {
   width: 6px;
+}
+
+.car-selector::-webkit-scrollbar-track,
+.config-panel::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .car-selector::-webkit-scrollbar-thumb,
@@ -56,6 +66,14 @@ html, body, #root {
   border-radius: 3px;
 }
 
+.car-selector::-webkit-scrollbar-thumb:hover,
+.config-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ============================================
+   Panel Headings
+   ============================================ */
 .car-selector h2,
 .config-panel h2 {
   font-size: 11px;
@@ -68,6 +86,9 @@ html, body, #root {
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+/* ============================================
+   Car Buttons
+   ============================================ */
 .car-btn {
   display: block;
   width: 100%;
@@ -99,6 +120,9 @@ html, body, #root {
   box-shadow: 0 4px 20px rgba(255, 59, 48, 0.4);
 }
 
+/* ============================================
+   Color Groups
+   ============================================ */
 .color-group {
   margin-bottom: 22px;
 }
@@ -152,6 +176,9 @@ html, body, #root {
   cursor: pointer;
 }
 
+/* ============================================
+   Range Slider
+   ============================================ */
 input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
@@ -172,6 +199,9 @@ input[type="range"]::-webkit-slider-thumb {
   cursor: pointer;
 }
 
+/* ============================================
+   Checkbox
+   ============================================ */
 input[type="checkbox"] {
   appearance: none;
   -webkit-appearance: none;
@@ -204,6 +234,9 @@ input[type="checkbox"]:checked::before {
   transform: translateX(16px);
 }
 
+/* ============================================
+   Brand Logo
+   ============================================ */
 .brand-logo {
   position: fixed;
   top: 24px;
@@ -218,6 +251,9 @@ input[type="checkbox"]:checked::before {
   pointer-events: none;
 }
 
+/* ============================================
+   Error Box
+   ============================================ */
 .error-box {
   position: fixed;
   bottom: 24px;
@@ -230,7 +266,9 @@ input[type="checkbox"]:checked::before {
   z-index: 50;
 }
 
-/*  Mobile */
+/* ============================================
+   Mobile Toggle Buttons
+   ============================================ */
 .mobile-toggle {
   display: none;
   position: fixed;
@@ -262,6 +300,9 @@ input[type="checkbox"]:checked::before {
   right: 20px;
 }
 
+/* ============================================
+   Mobile Overlay
+   ============================================ */
 .mobile-overlay {
   display: none;
   position: fixed;
@@ -272,6 +313,9 @@ input[type="checkbox"]:checked::before {
   z-index: 90;
 }
 
+/* ============================================
+   Panel Close Button
+   ============================================ */
 .panel-close {
   display: none;
   position: absolute;
@@ -287,13 +331,18 @@ input[type="checkbox"]:checked::before {
   cursor: pointer;
   align-items: center;
   justify-content: center;
+  z-index: 10;
 }
 
+/* ============================================
+   ✅ MOBILE STYLES — مع سكرول كامل
+   ============================================ */
 @media (max-width: 768px) {
   .mobile-toggle {
     display: flex;
   }
 
+  /* ✅ اللوحة: قابلة للسكرول بالكامل */
   .car-selector,
   .config-panel {
     display: none;
@@ -304,8 +353,27 @@ input[type="checkbox"]:checked::before {
     width: 82%;
     max-width: 340px;
     border-radius: 0;
+
+    /* ✅ مساحة علوية لزر الإغلاق */
     padding-top: 70px;
-    z-index: 100; /* ✅ فوق الـ overlay */
+
+    /* ✅ مساحة سفلية حتى لا يكون آخر عنصر ملتصقاً */
+    padding-bottom: 100px;
+
+    /* ✅ تفعيل السكرول */
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    /* ✅ سكرول ناعم على iOS */
+    -webkit-overflow-scrolling: touch;
+
+    /* ✅ منع تمرير الصفحة خلف اللوحة */
+    overscroll-behavior: contain;
+
+    /* ✅ ضمان عمل السكرول باللمس */
+    touch-action: pan-y;
+
+    z-index: 100;
     animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
@@ -332,6 +400,18 @@ input[type="checkbox"]:checked::before {
 
   .panel-close {
     display: flex;
+
+    /* ✅ زر الإغلاق ثابت في الأعلى */
+    position: sticky;
+    top: -50px;
+    margin-left: auto;
+    margin-bottom: -32px;
+    margin-right: 0;
+
+    /* خلفية داكنة لضمان الرؤية أثناء السكرول */
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
   }
 
   .car-btn {
@@ -342,14 +422,48 @@ input[type="checkbox"]:checked::before {
   .brand-logo {
     display: none;
   }
+
+  /* ✅ شريط تمرير أنيق للموبايل */
+  .car-selector::-webkit-scrollbar,
+  .config-panel::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .car-selector::-webkit-scrollbar-thumb,
+  .config-panel::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 2px;
+  }
+
+  /* ✅ شبكة ألوان أكبر قليلاً على الموبايل */
+  .color-grid {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+  }
+
+  .color-swatch {
+    border-radius: 6px;
+  }
+
+  .color-swatch {
+    min-height: 36px;
+  }
+
+  .config-panel input,
+  .config-panel label {
+    -webkit-user-select: auto;
+    user-select: auto;
+    touch-action: auto;
+  }
 }
 
+/*Animations*/
 @keyframes slideIn {
   from { transform: translateX(-100%); }
-  to { transform: translateX(0); }
+  to   { transform: translateX(0); }
 }
 
 @keyframes slideInRight {
   from { transform: translateX(100%); }
-  to { transform: translateX(0); }
+  to   { transform: translateX(0); }
 }

@@ -1,4 +1,4 @@
-import { Suspense, useMemo } from 'react'
+import { Suspense, useMemo, useEffect } from 'react'
 import { Canvas } from '@react-three/fiber'
 import {
   OrbitControls,
@@ -7,12 +7,18 @@ import {
   Html,
   MeshReflectorMaterial,
   Lightformer,
+  AdaptiveDpr,
+  AdaptiveEvents,
 } from '@react-three/drei'
-import { EffectComposer, Bloom, N8AO, Vignette } from '@react-three/postprocessing'
+import { useGLTF } from '@react-three/drei'
+import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing'
 import * as THREE from 'three'
 import { CarModel } from './CarModel'
-import { useCarStore } from '../store/useCarStore'
+import { useCarStore, CARS } from '../store/useCarStore'
 
+const BASE_PATH = '/models/'
+
+// Loading Fallback
 function LoadingFallback() {
   return (
     <Html center>
@@ -23,6 +29,8 @@ function LoadingFallback() {
           letterSpacing: 4,
           textTransform: 'uppercase',
           opacity: 0.6,
+          fontFamily: 'Inter, sans-serif',
+          whiteSpace: 'nowrap',
         }}
       >
         Loading Showroom...
@@ -31,10 +39,11 @@ function LoadingFallback() {
   )
 }
 
-function LuxuryLightRing() {
+// Luxury Light Ring
+function LuxuryLightRing({ isLowEnd }) {
   const lights = useMemo(() => {
     const arr = []
-    const count = 12
+    const count = isLowEnd ? 8 : 12
     const radius = 5
     for (let i = 0; i < count; i++) {
       const angle = (i / count) * Math.PI * 2
@@ -44,7 +53,7 @@ function LuxuryLightRing() {
       })
     }
     return arr
-  }, [])
+  }, [isLowEnd])
 
   return (
     <group>
@@ -58,26 +67,53 @@ function LuxuryLightRing() {
   )
 }
 
+// Scene
 export function Scene() {
   const selectedCar = useCarStore((s) => s.selectedCar)
+
+  const isLowEnd = useMemo(() => {
+    if (typeof navigator === 'undefined') return false
+    const cores = navigator.hardwareConcurrency || 4
+    const memory = navigator.deviceMemory || 4
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod|Tablet/i.test(
+      navigator.userAgent
+    )
+    return (isMobile && cores <= 4) || memory <= 4
+  }, [])
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (CARS[1]) {
+        useGLTF.preload(BASE_PATH + CARS[1].file)
+      }
+      setTimeout(() => {
+        if (CARS[2]) {
+          useGLTF.preload(BASE_PATH + CARS[2].file)
+        }
+      }, 3000)
+    }, 5000)
+
+    return () => clearTimeout(timer)
+  }, [])
 
   return (
     <Canvas
       shadows
-      dpr={[1, 1.5]}
+      dpr={[1, isLowEnd ? 1 : 1.5]}
       gl={{
-        antialias: true,
+        antialias: !isLowEnd,
         preserveDrawingBuffer: false,
         powerPreference: 'high-performance',
         toneMapping: THREE.ACESFilmicToneMapping,
-        toneMappingExposure: 1.0,
+        toneMappingExposure: 0.9,
       }}
       camera={{ position: [7, 3, 7], fov: 35 }}
+      performance={{ min: 0.5 }}
     >
       <color attach="background" args={['#08080a']} />
       <fog attach="fog" args={['#08080a', 20, 45]} />
 
-      <ambientLight intensity={0.15} />
+      <ambientLight intensity={0.2} />
 
       <spotLight
         position={[8, 12, 6]}
@@ -85,8 +121,8 @@ export function Scene() {
         penumbra={1}
         intensity={3.5}
         color="#fff5e6"
-        castShadow
-        shadow-mapSize={[1024, 1024]}
+        castShadow={!isLowEnd}
+        shadow-mapSize={isLowEnd ? [512, 512] : [1024, 1024]}
         shadow-bias={-0.0001}
       />
 
@@ -106,12 +142,12 @@ export function Scene() {
         color="#ff9944"
       />
 
-      <Environment resolution={256} frames={1} background={false}>
-        <Lightformer
-          intensity={2}
-          position={[0, 5, -9]}
-          scale={[10, 5, 1]}
-        />
+      <Environment
+        resolution={isLowEnd ? 128 : 256}
+        frames={1}
+        background={false}
+      >
+        <Lightformer intensity={2} position={[0, 5, -9]} scale={[10, 5, 1]} />
         <Lightformer
           intensity={1.5}
           position={[-5, 1, -1]}
@@ -124,20 +160,24 @@ export function Scene() {
           rotation={[0, -Math.PI / 2, 0]}
           scale={[10, 2, 1]}
         />
-        <Lightformer
-          intensity={1}
-          position={[0, -5, 5]}
-          scale={[10, 5, 1]}
-        />
-        <Lightformer
-          intensity={0.5}
-          position={[0, 10, 0]}
-          rotation={[Math.PI / 2, 0, 0]}
-          scale={[15, 15, 1]}
-        />
+        {!isLowEnd && (
+          <>
+            <Lightformer
+              intensity={1}
+              position={[0, -5, 5]}
+              scale={[10, 5, 1]}
+            />
+            <Lightformer
+              intensity={0.5}
+              position={[0, 10, 0]}
+              rotation={[Math.PI / 2, 0, 0]}
+              scale={[15, 15, 1]}
+            />
+          </>
+        )}
       </Environment>
 
-      <LuxuryLightRing />
+      <LuxuryLightRing isLowEnd={isLowEnd} />
 
       <Suspense fallback={<LoadingFallback />}>
         <CarModel key={selectedCar.id} />
@@ -149,26 +189,38 @@ export function Scene() {
         scale={20}
         blur={2}
         far={8}
-        resolution={512}
+        resolution={isLowEnd ? 256 : 512}
         frames={1}
         color="#000000"
       />
 
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 0]} receiveShadow>
+      <mesh
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[0, -0.02, 0]}
+        receiveShadow
+      >
         <planeGeometry args={[100, 100]} />
-        <MeshReflectorMaterial
-          blur={[100, 50]}
-          resolution={512}
-          mixBlur={1}
-          mixStrength={30}
-          roughness={0.9}
-          depthScale={1.2}
-          minDepthThreshold={0.4}
-          maxDepthThreshold={1.4}
-          color="#0a0a0c"
-          metalness={0.6}
-          mirror={0.3}
-        />
+        {isLowEnd ? (
+          <meshStandardMaterial
+            color="#0a0a0c"
+            metalness={0.6}
+            roughness={0.4}
+          />
+        ) : (
+          <MeshReflectorMaterial
+            blur={[100, 50]}
+            resolution={512}
+            mixBlur={1}
+            mixStrength={30}
+            roughness={0.9}
+            depthScale={1.2}
+            minDepthThreshold={0.4}
+            maxDepthThreshold={1.4}
+            color="#0a0a0c"
+            metalness={0.6}
+            mirror={0.3}
+          />
+        )}
       </mesh>
 
       <OrbitControls
@@ -177,25 +229,23 @@ export function Scene() {
         maxDistance={16}
         minPolarAngle={0.3}
         maxPolarAngle={Math.PI / 2.1}
-        autoRotate
+        autoRotate={!isLowEnd}
         autoRotateSpeed={0.4}
         target={[0, 0.6, 0]}
         enableDamping
         dampingFactor={0.05}
       />
 
-      <EffectComposer multisampling={0}>
-        <N8AO
-          aoRadius={0.6}
-          intensity={3}
-          distanceFalloff={1.2}
-          color="black"
-          halfRes
-          quality="performance"
-        />
-        <Bloom intensity={0.8} luminanceThreshold={0.75} mipmapBlur />
-        <Vignette eskil={false} offset={0.15} darkness={0.85} />
-      </EffectComposer>
+      {/*  Post-processing فقط على الأجهزة القوية */}
+      {!isLowEnd && (
+        <EffectComposer multisampling={0}>
+          <Bloom intensity={0.8} luminanceThreshold={0.75} mipmapBlur />
+          <Vignette eskil={false} offset={0.15} darkness={0.85} />
+        </EffectComposer>
+      )}
+
+      <AdaptiveDpr pixelated />
+      <AdaptiveEvents />
     </Canvas>
   )
 }
